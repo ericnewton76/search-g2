@@ -60,10 +60,6 @@ function CrownPeakSearch(options) {
 
 	parseArguments(options);
 
-	// Fill for missing console.log for oldIE
-	if (typeof console === "undefined") console = { log: function() { } }
-	else if (!console.log) { console.log = function () { }; }
-
 	function parseArguments(options) {
 		if (options) {
 			if (typeof options === "string") {
@@ -557,7 +553,109 @@ function CrownPeakSearch(options) {
 		return deferred.promise();
 	}
 
-	function Deferred() {
+	// Getters and setters would be nice, but in the meantime...
+	this.rows = function (value) { if (value !== undefined) _rows = value; return _rows; };
+	this.collection = function (value) { if (value !== undefined) _collection = value; return _collection; };
+	this.endpoint = function (value) { if (value !== undefined) _endpoint = value; return _endpoint; };
+	this.facets = function (value) { if (value !== undefined) _facets = (typeof value === "string" ? [value] : value); return _facets; };
+	this.maxFacets = function (value) { if (value !== undefined) _maxFacets = value; return _maxFacets; };
+	this.handler = function (value) { if (value !== undefined) _handler = value; return _handler; };
+	this.highlight = function (value) { if (value !== undefined) _highlight = value; return _highlight; };
+	this.highlightSeparator = function (value) { if (value !== undefined) _highlightSeparator = value; return _highlightSeparator; };
+	this.language = function (value) { if (value !== undefined) _language = value; return _language; };
+	this.searchProxy = function (value) { if (value !== undefined) _searchProxy = value; return _searchProxy; };
+	this.spellcheck = function (value) { if (value !== undefined) _spellcheck = value; return _spellcheck; };
+	this.sort = function (value) { if (value !== undefined) _sort = (typeof value === "string" ? [value] : value); return _sort; };
+	this.timeout = function (value) { if (value !== undefined) _timeout = value; return _timeout; };
+	this.parameters = function (value) { if (value !== undefined) _params = value; return _params; };
+	this.resultProxy = function (value) { if (value !== undefined) _resultProxy = value; return _resultProxy; };
+	this.geo = function (value) { if (value !== undefined) _geo = value; return _geo; };
+
+	/// <summary>
+	/// Run a query against the configured CrownPeakSearch object
+	/// </summary>
+	/// <param name="text">The query text. See https://wiki.apache.org/solr/SolrQuerySyntax for more information</param>
+	/// <param name="page">The page number (starting at 1) of results that you wish to retrieve</param>
+	/// <param name="filterQueries">An array of strings in the format "field:value" to apply to the query</param>
+	/// <returns>A Deferred object that will be resolved when the query is complete</returns>
+	this.query = function(text, page, filterQueries) {
+		if (!page) page = 1;
+		return internalQuery(text, page - 1, filterQueries);
+	};
+
+	/// <summary>
+	/// Run an autocomplete (suggest) query against the configured CrownPeakSearch object
+	/// </summary>
+	/// <param name="text">The query text. See https://wiki.apache.org/solr/SolrQuerySyntax for more information</param>
+	/// <returns>A Deferred object that will be resolved when the query is complete</returns>
+	this.autocomplete = function (text) {
+		return internalAutocompleteQuery(text);
+	};
+
+	/// <summary>
+	/// Run a raw query against the Solr instance that is configured in the CrownPeakSearch object
+	/// </summary>
+	/// <param name="query">The query, sent in an HTTP GET request. See http://lucene.apache.org/solr/3_6_2/doc-files/tutorial.html for more information</param>
+	/// <returns>A Deferred object that will be resolved when the query is complete</returns>
+	this.raw = function(query) {
+		return internalRawQuery(query);
+	};
+}
+
+/* Polyfills */
+(function() {
+
+  //!polyfill:console.log
+	// Fill for missing console.log for oldIE
+	if (typeof console === "undefined") console = { log: function() { } }
+  else if (!console.log) { console.log = function () { }; }
+  
+  //!polyfill:Object.keys
+  // Old IE support
+  // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+  if (!Object.keys) {
+    Object.keys = (function () {
+      'use strict';
+      var hasOwnProperty = Object.prototype.hasOwnProperty,
+          hasDontEnumBug = !({ toString: null }).propertyIsEnumerable('toString'),
+          dontEnums = [
+            'toString',
+            'toLocaleString',
+            'valueOf',
+            'hasOwnProperty',
+            'isPrototypeOf',
+            'propertyIsEnumerable',
+            'constructor'
+          ],
+          dontEnumsLength = dontEnums.length;
+  
+      return function (obj) {
+        if (typeof obj !== 'object' && (typeof obj !== 'function' || obj === null)) {
+          throw new TypeError('Object.keys called on non-object');
+        }
+  
+        var result = [], prop, i;
+  
+        for (prop in obj) {
+          if (hasOwnProperty.call(obj, prop)) {
+            result.push(prop);
+          }
+        }
+  
+        if (hasDontEnumBug) {
+          for (i = 0; i < dontEnumsLength; i++) {
+            if (hasOwnProperty.call(obj, dontEnums[i])) {
+              result.push(dontEnums[i]);
+            }
+          }
+        }
+        return result;
+      };
+    })
+  }
+
+  //!polfill:Deferred()
+  function Deferred() {
 		var deferred = {
 			args: null,
 			state: "pending",
@@ -620,96 +718,6 @@ function CrownPeakSearch(options) {
 				}
 			}
 		}
-	}
-
-	// Getters and setters would be nice, but in the meantime...
-	this.rows = function (value) { if (value !== undefined) _rows = value; return _rows; };
-	this.collection = function (value) { if (value !== undefined) _collection = value; return _collection; };
-	this.endpoint = function (value) { if (value !== undefined) _endpoint = value; return _endpoint; };
-	this.facets = function (value) { if (value !== undefined) _facets = (typeof value === "string" ? [value] : value); return _facets; };
-	this.maxFacets = function (value) { if (value !== undefined) _maxFacets = value; return _maxFacets; };
-	this.handler = function (value) { if (value !== undefined) _handler = value; return _handler; };
-	this.highlight = function (value) { if (value !== undefined) _highlight = value; return _highlight; };
-	this.highlightSeparator = function (value) { if (value !== undefined) _highlightSeparator = value; return _highlightSeparator; };
-	this.language = function (value) { if (value !== undefined) _language = value; return _language; };
-	this.searchProxy = function (value) { if (value !== undefined) _searchProxy = value; return _searchProxy; };
-	this.spellcheck = function (value) { if (value !== undefined) _spellcheck = value; return _spellcheck; };
-	this.sort = function (value) { if (value !== undefined) _sort = (typeof value === "string" ? [value] : value); return _sort; };
-	this.timeout = function (value) { if (value !== undefined) _timeout = value; return _timeout; };
-	this.parameters = function (value) { if (value !== undefined) _params = value; return _params; };
-	this.resultProxy = function (value) { if (value !== undefined) _resultProxy = value; return _resultProxy; };
-	this.geo = function (value) { if (value !== undefined) _geo = value; return _geo; };
-
-	/// <summary>
-	/// Run a query against the configured CrownPeakSearch object
-	/// </summary>
-	/// <param name="text">The query text. See https://wiki.apache.org/solr/SolrQuerySyntax for more information</param>
-	/// <param name="page">The page number (starting at 1) of results that you wish to retrieve</param>
-	/// <param name="filterQueries">An array of strings in the format "field:value" to apply to the query</param>
-	/// <returns>A Deferred object that will be resolved when the query is complete</returns>
-	this.query = function(text, page, filterQueries) {
-		if (!page) page = 1;
-		return internalQuery(text, page - 1, filterQueries);
-	};
-
-	/// <summary>
-	/// Run an autocomplete (suggest) query against the configured CrownPeakSearch object
-	/// </summary>
-	/// <param name="text">The query text. See https://wiki.apache.org/solr/SolrQuerySyntax for more information</param>
-	/// <returns>A Deferred object that will be resolved when the query is complete</returns>
-	this.autocomplete = function (text) {
-		return internalAutocompleteQuery(text);
-	};
-
-	/// <summary>
-	/// Run a raw query against the Solr instance that is configured in the CrownPeakSearch object
-	/// </summary>
-	/// <param name="query">The query, sent in an HTTP GET request. See http://lucene.apache.org/solr/3_6_2/doc-files/tutorial.html for more information</param>
-	/// <returns>A Deferred object that will be resolved when the query is complete</returns>
-	this.raw = function(query) {
-		return internalRawQuery(query);
-	};
-}
-
-// Old IE support
-// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
-if (!Object.keys) {
-	Object.keys = (function () {
-		'use strict';
-		var hasOwnProperty = Object.prototype.hasOwnProperty,
-				hasDontEnumBug = !({ toString: null }).propertyIsEnumerable('toString'),
-				dontEnums = [
-					'toString',
-					'toLocaleString',
-					'valueOf',
-					'hasOwnProperty',
-					'isPrototypeOf',
-					'propertyIsEnumerable',
-					'constructor'
-				],
-				dontEnumsLength = dontEnums.length;
-
-		return function (obj) {
-			if (typeof obj !== 'object' && (typeof obj !== 'function' || obj === null)) {
-				throw new TypeError('Object.keys called on non-object');
-			}
-
-			var result = [], prop, i;
-
-			for (prop in obj) {
-				if (hasOwnProperty.call(obj, prop)) {
-					result.push(prop);
-				}
-			}
-
-			if (hasDontEnumBug) {
-				for (i = 0; i < dontEnumsLength; i++) {
-					if (hasOwnProperty.call(obj, dontEnums[i])) {
-						result.push(dontEnums[i]);
-					}
-				}
-			}
-			return result;
-		};
-	}());
-}
+  }
+  
+}());
