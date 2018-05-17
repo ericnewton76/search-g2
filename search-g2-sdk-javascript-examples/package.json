@@ -1,0 +1,23 @@
+{
+  "name": "crownpeak.searchg2",
+  "version": "2.0.0",
+  "description": "CrownPeak SearchG2 javascript client",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Crownpeak/search-g2.git"
+  },
+  "keywords": [
+    "CrownPeak",
+    "searchg2"
+  ],
+  "author": "E Newton",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Crownpeak/search-g2/issues"
+  },
+  "homepage": "https://github.com/Crownpeak/search-g2#readme"
+}
